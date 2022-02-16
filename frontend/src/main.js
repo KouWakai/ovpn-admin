@@ -43,7 +43,6 @@ var axios_cfg = function(url, data='', type='form') {
 };
 
 new Vue({
-  VueRouter,
   el: '#app',
   data: {
     columns: [
