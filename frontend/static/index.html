@@ -14,6 +14,8 @@
     :row-style-class="rowStyleClassFn"
     :search-options="{ enabled: true}" >
     <div slot="table-actions">
+      <a href="/metrics">metrics</a>
+      <button type="button" class="btn btn-sm btn-primary el-square" v-show="serverRole == 'master'" v-on:click.stop="u.modalImportUsersVisible=true">Import users</button>
       <button type="button" class="btn btn-sm btn-success el-square" v-show="serverRole == 'master'" v-on:click.stop="u.modalNewUserVisible=true">Add user</button>
       <b-badget class="btn btn-sm btn-info el-square" v-if="serverRole == 'slave'">Slave - last sync: {{ lastSync }}</b-badget>
       <button type="button" class="btn btn-sm btn-secondary el-square" v-on:click.stop="filters.hideRevoked=!filters.hideRevoked;this.$cookies.set('hideRevoked',!(this.$cookies.get('hideRevoked') == 'true'), -1);">{{ revokeFilterText }}</button>
@@ -65,6 +67,29 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-success el-square modal-el-margin" v-on:click.stop="createUser()">Create</button>
             <button type="button" class="btn btn-primary el-square d-flex justify-content-sm-end modal-el-margin" v-on:click.stop="u.newUserName='';u.newUserPassword='nopass';u.modalNewUserVisible=false">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-wrapper" v-if="u.modalImportUsersVisible" v-bind:style="modalImportUsersDisplay">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+        <div class="modal-header">
+          <h4>Import Users</h4>
+        </div>
+        <div class="modal-body">
+          <input type="file" @change="importFile" id="import-file">
+        </div>
+
+        <!-- <div class="modal-footer justify-content-center" v-if="u.newUserCreateError.length > 0">
+          <div class="alert alert-danger" role="alert" >
+            {{ u.newUserCreateError }}
+          </div>
+        </div> -->
+        <div class="modal-footer">
+            <button type="button" class="btn btn-success el-square modal-el-margin" v-on:click.stop="ImportUsers()">Import</button>
+            <button type="button" class="btn btn-primary el-square d-flex justify-content-sm-end modal-el-margin" v-on:click.stop="u.newUserName='';u.newUserPassword='nopass';u.modalImportUsersVisible=false">Close</button>
         </div>
       </div>
     </div>

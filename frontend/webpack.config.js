@@ -5,7 +5,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 module.exports = {
   mode: 'production',
   entry: {
-    bundle: [
+    bundle: ['@babel/polyfill',
       './src/main.js',
       ],
     style: [

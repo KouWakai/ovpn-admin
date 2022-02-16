@@ -43,6 +43,7 @@ var axios_cfg = function(url, data='', type='form') {
 };
 
 new Vue({
+  VueRouter,
   el: '#app',
   data: {
     columns: [
@@ -98,6 +99,14 @@ new Vue({
         showWhenStatus: 'Active',
         showForServerRole: ['master'],
         showForModule: ['passwdAuth'],
+      },
+      {
+        name: 'u-delete',
+        label: 'Delete',
+        class: 'btn-danger',
+        showWhenStatus: 'Active',
+        showForServerRole: ['master'],
+        showForModule: ["core"],
       },
       {
         name: 'u-revoke',
@@ -158,10 +167,12 @@ new Vue({
       newUserName: '',
       newUserPassword: '',
       newUserCreateError: '',
+      ImportUsersCreateError: '',
       newPassword: '',
       passwordChangeStatus: '',
       passwordChangeMessage: '',
       modalNewUserVisible: false,
+      modalImportUsersVisible: false,
       modalShowConfigVisible: false,
       modalShowCcdVisible: false,
       modalChangePasswordVisible: false,
@@ -174,7 +185,9 @@ new Vue({
       newRoute: {},
       ccdApplyStatus: "",
       ccdApplyStatusMessage: "",
-    }
+    },
+    csvUsers:
+    [],
   },
   watch: {
   },
@@ -186,6 +199,15 @@ new Vue({
   created() {
     var _this = this;
 
+    _this.$root.$on('u-delete', function (msg) {
+      var data = new URLSearchParams();
+      data.append('username', _this.username);
+      axios.request(axios_cfg('api/user/delete', data, 'form'))
+      .then(function(response) {
+        _this.getUserData();
+        _this.$notify({title: 'User ' + _this.username + ' deleted!', type: 'warn'})
+      });
+    })
     _this.$root.$on('u-revoke', function (msg) {
       var data = new URLSearchParams();
       data.append('username', _this.username);
@@ -262,6 +284,9 @@ new Vue({
     },
     modalNewUserDisplay: function () {
       return this.u.modalNewUserVisible ? {display: 'flex'} : {}
+    },
+    modalImportUsersDisplay: function () {
+      return this.u.modalImportUsersVisible ? {display: 'flex'} : {}
     },
     modalShowConfigDisplay: function () {
       return this.u.modalShowConfigVisible ? {display: 'flex'} : {}
@@ -352,6 +377,34 @@ new Vue({
       });
     },
 
+      ImportUsers: async function() {
+      var _this = this;
+      console.log(this.csvUsers)
+
+      for(let i = 0; i< this.csvUsers.length;i++){
+          _this.u.ImportUsersCreateError = "";
+          console.log(this.csvUsers[i])
+
+          var data = new URLSearchParams();
+          data.append('username', this.csvUsers[i]);
+          data.append('password', _this.u.newUserPassword);
+
+          _this.username = this.csvUsers[i];
+
+          await axios.request(axios_cfg('api/user/create', data, 'form'))
+          .then(function(response) {
+            _this.$notify({title: 'New user ' + _this.username + ' created', type: 'success'})
+            _this.u.modalImportUsersDisplay = false;
+            _this.u.newUserPassword = '';
+            _this.getUserData();
+          })
+          .catch(function(error) {
+            _this.u.newUserCreateError = error.response.data;
+            _this.$notify({title: 'New user ' + _this.username + ' creation failed.', type: 'error'})
+          });
+        }
+    },
+
     ccdApply: function() {
       var _this = this;
 
@@ -393,6 +446,16 @@ new Vue({
           _this.u.passwordChangeMessage = error.response.data.message;
           _this.$notify({title: 'Changing password for user ' + _this.username + ' failed!', type: 'error'})
         });
+    },
+
+    importFile: async function(e){
+      if (!(e.target instanceof HTMLInputElement)) return
+      if (!e.target.files) return
+      this.csvUsers = this.parseCSV(await e.target.files[0].text())
+    },
+
+    parseCSV: function(data){
+      return data.replace(/\n/g, '').split(',')
     },
   }
 
